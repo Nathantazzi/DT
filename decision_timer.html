@@ -1,175 +1,611 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Decision Timer — by Tazzi H</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #ffffff; --bg2: #f5f5f3; --text: #1a1a18; --text2: #6b6b67;
-      --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.25);
-      --pl: #EEEDFE; --pm: #AFA9EC; --pd: #3C3489;
-      --rm: 8px; --rl: 12px;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root { --bg:#1c1c1a; --bg2:#272724; --text:#f0ede6; --text2:#9a9994;
-        --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.22);
-        --pl:#26215C; --pm:#534AB7; --pd:#CECBF6; }
-    }
-    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:2rem 1rem 4rem; }
-    #root { width:100%; max-width:520px; }
-    h1 { font-size:18px; font-weight:500; margin-bottom:4px; }
-    .sub { font-size:13px; color:var(--text2); margin-bottom:1.5rem; line-height:1.5; }
-    .card { background:var(--bg); border:0.5px solid var(--border); border-radius:var(--rl); padding:1.25rem; margin-bottom:1rem; }
-    label { font-size:13px; color:var(--text2); display:block; margin-bottom:6px; }
-    textarea { width:100%; font-size:14px; font-family:inherit; color:var(--text); background:var(--bg2); border:0.5px solid var(--border); border-radius:var(--rm); padding:10px 12px; resize:none; height:72px; line-height:1.5; }
-    textarea:focus { outline:none; border-color:var(--border2); }
-    .chips { display:flex; gap:8px; flex-wrap:wrap; }
-    .chip { font-size:13px; padding:6px 14px; border-radius:999px; border:0.5px solid var(--border2); background:var(--bg2); color:var(--text2); cursor:pointer; transition:all 0.15s; }
-    .chip.active { background:var(--pl); border-color:var(--pm); color:var(--pd); }
-    .mood-row { display:flex; gap:8px; margin-top:4px; }
-    .mood-btn { flex:1; padding:10px 6px; font-size:13px; border-radius:var(--rm); border:0.5px solid var(--border2); background:var(--bg2); color:var(--text2); cursor:pointer; text-align:center; transition:all 0.15s; line-height:1.4; }
-    .mood-btn.active { background:var(--pl); border-color:var(--pm); color:var(--pd); }
-    #startBtn { width:100%; padding:12px; font-size:15px; font-weight:500; border-radius:var(--rm); border:0.5px solid var(--border2); background:var(--bg); color:var(--text); cursor:pointer; transition:background 0.15s; }
-    #startBtn:hover { background:var(--bg2); }
-    #startBtn:disabled { opacity:0.4; cursor:default; }
-    #timerView { display:none; text-align:center; }
-    .q-display { font-size:16px; font-weight:500; margin-bottom:1.5rem; line-height:1.5; }
-    .ring-wrap { position:relative; width:150px; height:150px; margin:0 auto 1rem; }
-    svg.ring { width:150px; height:150px; transform:rotate(-90deg); }
-    circle.bg { fill:none; stroke:var(--border); stroke-width:8; }
-    circle.prog { fill:none; stroke-width:8; stroke-linecap:round; transition:stroke-dashoffset 0.5s linear, stroke 0.5s; }
-    .time-lbl { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:34px; font-weight:500; }
-    .pressure { font-size:13px; color:var(--text2); min-height:20px; margin-bottom:1.25rem; font-style:italic; }
-    .opts-row { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:1rem; }
-    .opt-btn { flex:1; min-width:110px; max-width:200px; padding:12px 10px; font-size:14px; font-weight:500; border-radius:var(--rm); border:0.5px solid var(--border2); background:var(--bg2); color:var(--text); cursor:pointer; transition:background 0.15s,transform 0.1s; line-height:1.4; }
-    .opt-btn:hover { background:var(--pl); border-color:var(--pm); color:var(--pd); }
-    .opt-btn:active { transform:scale(0.97); }
-    #skipBtn { font-size:13px; color:var(--text2); background:none; border:none; cursor:pointer; padding:4px; text-decoration:underline; }
-    #resultView { display:none; }
-    .badge { display:inline-block; font-size:12px; padding:3px 12px; border-radius:999px; background:var(--pl); color:var(--pd); border:0.5px solid var(--pm); margin-bottom:1rem; }
-    .chosen-text { font-size:20px; font-weight:500; margin-bottom:0.5rem; line-height:1.4; }
-    .insight-text { font-size:13px; color:var(--text2); margin-bottom:1.5rem; line-height:1.5; }
-    .conf-section { background:var(--bg2); border-radius:var(--rm); padding:1rem; margin-bottom:1rem; }
-    .conf-label { font-size:13px; color:var(--text2); margin-bottom:8px; }
-    .conf-row { display:flex; align-items:center; gap:10px; }
-    input[type=range] { flex:1; accent-color:#7F77DD; }
-    .conf-val { font-size:15px; font-weight:500; min-width:24px; }
-    .conf-feedback { font-size:13px; color:var(--text2); margin-top:8px; font-style:italic; min-height:18px; }
-    .action-row { display:flex; gap:8px; flex-wrap:wrap; }
-    .action-row button { flex:1; min-width:120px; padding:10px; font-size:13px; border-radius:var(--rm); border:0.5px solid var(--border2); background:var(--bg); color:var(--text); cursor:pointer; }
-    .action-row button:hover { background:var(--bg2); }
-    .flip-btn { border-color:var(--pm) !important; color:var(--pd) !important; }
-    #histView { display:none; }
-    .hist-item { padding:10px 0; border-bottom:0.5px solid var(--border); }
-    .hist-item:last-child { border-bottom:none; }
-    .hist-q { font-size:13px; font-weight:500; margin-bottom:2px; }
-    .hist-meta { font-size:12px; color:var(--text2); }
-    .conf-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; vertical-align:middle; }
-    .nav-row { display:flex; gap:8px; margin-bottom:1.25rem; }
-    .nav-btn { font-size:13px; padding:6px 14px; border-radius:999px; border:0.5px solid var(--border2); background:var(--bg2); color:var(--text2); cursor:pointer; }
-    .nav-btn.active { background:var(--pl); border-color:var(--pm); color:var(--pd); }
-    .footer { text-align:center; font-size:11px; color:var(--text2); margin-top:2rem; padding-top:1rem; border-top:0.5px solid var(--border); }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Decision Timer — by Tazzi H</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:ital@0;1&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  --bg:#0a0a0a;
+  --surface:#111111;
+  --surface2:#181818;
+  --border:#2a2a2a;
+  --border2:#3a3a3a;
+  --text:#f0ece4;
+  --text2:#7a776e;
+  --text3:#4a4844;
+  --accent:#c8f04a;
+  --accent2:#a8d038;
+  --accent-dim:rgba(200,240,74,0.08);
+  --accent-glow:rgba(200,240,74,0.15);
+  --red:#ff4d4d;
+  --orange:#ff8c42;
+  --rm:6px;
+  --rl:12px;
+}
+
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Syne',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:2.5rem 1.25rem 5rem;
+  position:relative;
+  overflow-x:hidden;
+}
+
+/* Grain overlay */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:0.6;
+}
+
+/* Glow top */
+body::after{
+  content:'';
+  position:fixed;
+  top:-200px;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;
+  background:radial-gradient(ellipse,rgba(200,240,74,0.06) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+#root{width:100%;max-width:500px;position:relative;z-index:1;}
+
+/* Header */
+.site-header{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:2.5rem;
+  padding-bottom:1.5rem;
+  border-bottom:1px solid var(--border);
+}
+.logo{
+  font-size:13px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--text2);
+}
+.logo span{color:var(--accent);}
+.nav-pills{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:3px;}
+.nav-pill{
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;
+  padding:5px 14px;border-radius:999px;border:none;
+  background:transparent;color:var(--text2);cursor:pointer;transition:all 0.2s;
+}
+.nav-pill.active{background:var(--accent);color:#0a0a0a;}
+
+/* Headings */
+.view-title{
+  font-size:32px;font-weight:800;letter-spacing:-0.02em;
+  line-height:1.1;margin-bottom:6px;
+}
+.view-title .hl{color:var(--accent);}
+.view-sub{font-size:13px;color:var(--text2);margin-bottom:2rem;line-height:1.6;font-family:'DM Mono',monospace;font-style:italic;}
+
+/* Cards */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--rl);
+  padding:1.25rem;
+  margin-bottom:0.75rem;
+  transition:border-color 0.2s;
+}
+.card:focus-within{border-color:var(--border2);}
+
+label{
+  font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--text3);display:block;margin-bottom:8px;
+}
+
+textarea{
+  width:100%;font-size:14px;font-family:'DM Mono',monospace;
+  color:var(--text);background:var(--surface2);
+  border:1px solid var(--border);border-radius:var(--rm);
+  padding:10px 12px;resize:none;height:72px;line-height:1.6;
+  transition:border-color 0.2s;
+}
+textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+textarea::placeholder{color:var(--text3);}
+
+/* Mood buttons */
+.mood-row{display:flex;gap:6px;}
+.mood-btn{
+  flex:1;padding:10px 6px;font-size:12px;font-weight:700;letter-spacing:0.05em;
+  text-transform:uppercase;border-radius:var(--rm);
+  border:1px solid var(--border);background:var(--surface2);
+  color:var(--text2);cursor:pointer;transition:all 0.2s;
+}
+.mood-btn:hover{border-color:var(--border2);color:var(--text);}
+.mood-btn.active{
+  background:var(--accent-dim);border-color:var(--accent);
+  color:var(--accent);
+}
+
+/* Time chips */
+.chips{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{
+  font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;
+  padding:6px 14px;border-radius:999px;
+  border:1px solid var(--border);background:var(--surface2);
+  color:var(--text2);cursor:pointer;transition:all 0.2s;
+}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#0a0a0a;}
+
+/* Start button */
+#startBtn{
+  width:100%;padding:14px;
+  font-family:'Syne',sans-serif;font-size:14px;font-weight:800;
+  letter-spacing:0.1em;text-transform:uppercase;
+  border-radius:var(--rm);border:1px solid var(--accent);
+  background:var(--accent);color:#0a0a0a;
+  cursor:pointer;transition:all 0.2s;
+  margin-top:0.25rem;
+  position:relative;overflow:hidden;
+}
+#startBtn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1) 0%,transparent 50%);
+}
+#startBtn:hover{background:var(--accent2);border-color:var(--accent2);transform:translateY(-1px);}
+#startBtn:active{transform:translateY(0);}
+#startBtn:disabled{opacity:0.25;cursor:default;transform:none;}
+
+/* ===== TIMER VIEW ===== */
+#timerView{display:none;text-align:center;}
+
+.q-display{
+  font-size:18px;font-weight:700;line-height:1.4;
+  margin-bottom:2rem;color:var(--text);
+  padding:1rem 1.25rem;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rl);text-align:left;
+  font-family:'DM Mono',monospace;font-style:italic;
+}
+.q-display::before{content:'" ';color:var(--accent);}
+.q-display::after{content:' "';color:var(--accent);}
+
+.ring-wrap{
+  position:relative;width:180px;height:180px;
+  margin:0 auto 1.5rem;
+}
+svg.ring{width:180px;height:180px;transform:rotate(-90deg);}
+circle.bg{fill:none;stroke:var(--border);stroke-width:6;}
+circle.prog{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 0.5s linear,stroke 0.8s ease;}
+.time-lbl{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:48px;font-weight:800;letter-spacing:-0.04em;
+  color:var(--text);line-height:1;
+}
+.time-unit{
+  position:absolute;bottom:30px;left:50%;transform:translateX(-50%);
+  font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--text3);font-family:'DM Mono',monospace;
+}
+
+.pressure{
+  font-size:13px;color:var(--text2);min-height:22px;
+  margin-bottom:1.5rem;font-family:'DM Mono',monospace;font-style:italic;
+  transition:opacity 0.3s;
+}
+
+.opts-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:1.25rem;}
+.opt-btn{
+  flex:1;min-width:120px;max-width:220px;padding:14px 12px;
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:0.04em;
+  border-radius:var(--rm);border:1px solid var(--border);
+  background:var(--surface);color:var(--text);
+  cursor:pointer;transition:all 0.2s;line-height:1.4;
+}
+.opt-btn:hover{
+  background:var(--accent-dim);border-color:var(--accent);
+  color:var(--accent);transform:translateY(-2px);
+}
+.opt-btn:active{transform:translateY(0);}
+
+#skipBtn{
+  font-size:12px;color:var(--text3);background:none;border:none;
+  cursor:pointer;padding:4px;font-family:'DM Mono',monospace;
+  text-decoration:underline;text-underline-offset:3px;
+  transition:color 0.2s;
+}
+#skipBtn:hover{color:var(--text2);}
+
+/* ===== RESULT VIEW ===== */
+#resultView{display:none;}
+
+.result-header{margin-bottom:1.5rem;}
+.result-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  padding:4px 12px;border-radius:999px;
+  background:var(--accent-dim);color:var(--accent);
+  border:1px solid rgba(200,240,74,0.3);
+  margin-bottom:1rem;
+}
+.result-tag::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+.chosen-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rl);padding:1.5rem;margin-bottom:0.75rem;
+  border-left:3px solid var(--accent);
+}
+.chosen-label{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+.chosen-text{font-size:22px;font-weight:800;letter-spacing:-0.01em;color:var(--text);line-height:1.3;}
+.insight-text{
+  font-size:13px;color:var(--text2);line-height:1.6;
+  font-family:'DM Mono',monospace;font-style:italic;
+  padding:1rem 1.25rem;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rm);margin-bottom:1rem;
+}
+
+/* Confidence */
+.conf-section{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rl);padding:1.25rem;margin-bottom:1rem;
+}
+.conf-label{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;}
+.conf-row{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.conf-edge{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;white-space:nowrap;}
+input[type=range]{
+  flex:1;-webkit-appearance:none;height:3px;
+  background:var(--border2);border-radius:999px;outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:16px;height:16px;
+  border-radius:50%;background:var(--accent);cursor:pointer;
+  box-shadow:0 0 0 3px var(--accent-dim);
+  transition:box-shadow 0.2s;
+}
+input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 0 6px var(--accent-glow);}
+.conf-display{
+  display:flex;align-items:baseline;gap:3px;
+  justify-content:center;margin-bottom:6px;
+}
+.conf-num{font-size:28px;font-weight:800;color:var(--accent);}
+.conf-denom{font-size:14px;color:var(--text3);font-family:'DM Mono',monospace;}
+.conf-feedback{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;font-style:italic;min-height:18px;text-align:center;}
+
+.action-row{display:flex;gap:8px;}
+.btn-flip{
+  flex:1;padding:12px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:0.06em;text-transform:uppercase;
+  border-radius:var(--rm);border:1px solid rgba(200,240,74,0.4);
+  background:var(--accent-dim);color:var(--accent);cursor:pointer;
+  transition:all 0.2s;
+}
+.btn-flip:hover{background:rgba(200,240,74,0.15);border-color:var(--accent);}
+.btn-new{
+  flex:1;padding:12px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:0.06em;text-transform:uppercase;
+  border-radius:var(--rm);border:1px solid var(--border);
+  background:var(--surface);color:var(--text2);cursor:pointer;
+  transition:all 0.2s;
+}
+.btn-new:hover{border-color:var(--border2);color:var(--text);}
+
+/* ===== HISTORY VIEW ===== */
+#histView{display:none;}
+.hist-empty{font-size:13px;color:var(--text3);font-family:'DM Mono',monospace;font-style:italic;margin-top:1rem;}
+.hist-item{
+  padding:1rem 0;border-bottom:1px solid var(--border);
+  animation:fadeIn 0.3s ease;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+.hist-item:last-child{border-bottom:none;}
+.hist-q{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.hist-chosen{
+  font-size:12px;color:var(--accent);
+  font-family:'DM Mono',monospace;margin-bottom:3px;
+}
+.hist-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.hist-conf{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);
+}
+.conf-bar{height:3px;width:40px;background:var(--border);border-radius:999px;overflow:hidden;}
+.conf-fill{height:100%;border-radius:999px;transition:width 0.3s;}
+.hist-mood{
+  font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  padding:2px 8px;border-radius:999px;
+  background:var(--surface2);color:var(--text3);border:1px solid var(--border);
+}
+.hist-date{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;}
+
+/* Footer */
+.footer{
+  text-align:center;margin-top:3rem;padding-top:1.5rem;
+  border-top:1px solid var(--border);
+}
+.footer-brand{
+  font-size:11px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--text3);
+}
+.footer-brand span{color:var(--accent);}
+
+/* Animations globales */
+.view-in{animation:viewIn 0.35s cubic-bezier(0.22,1,0.36,1);}
+@keyframes viewIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+</style>
 </head>
 <body>
 <div id="root">
-  <div class="nav-row">
-    <button class="nav-btn active" onclick="showView('setup')">Decider</button>
-    <button class="nav-btn" onclick="showView('hist')">Historique</button>
-  </div>
-  <div id="setupView">
-    <h1>Decision Timer</h1>
-    <p class="sub">Pose ta question, fixe un temps, et laisse ton instinct parler.</p>
+
+  <header class="site-header">
+    <div class="logo">DT<span>.</span></div>
+    <nav class="nav-pills">
+      <button class="nav-pill active" onclick="showView('setup')">Decider</button>
+      <button class="nav-pill" onclick="showView('hist')">Historique</button>
+    </nav>
+  </header>
+
+  <!-- SETUP -->
+  <div id="setupView" class="view-in">
+    <div class="view-title">Decide.<br><span class="hl">Stop hesitating.</span></div>
+    <div class="view-sub">// pose ta question. fixe un temps. ton instinct fera le reste.</div>
+
     <div class="card">
       <label>Ta question</label>
       <textarea id="question" placeholder="Ex: Est-ce que j'accepte cette offre ?" oninput="checkReady()"></textarea>
     </div>
+
     <div class="card">
       <label>Tes options (une par ligne)</label>
       <textarea id="options" placeholder="Oui, j'accepte&#10;Non, je passe&#10;Je demande plus de temps" oninput="checkReady()"></textarea>
     </div>
+
     <div class="card">
-      <label>Comment tu te sens par rapport a cette decision ?</label>
+      <label>Ton etat d'esprit</label>
       <div class="mood-row">
         <button class="mood-btn" data-mood="serein" onclick="selectMood(this)">Serein</button>
         <button class="mood-btn" data-mood="stresse" onclick="selectMood(this)">Stresse</button>
         <button class="mood-btn" data-mood="bloque" onclick="selectMood(this)">Bloque</button>
       </div>
     </div>
+
     <div class="card">
-      <label>Temps pour decider</label>
+      <label>Temps imparti</label>
       <div class="chips">
-        <div class="chip active" data-val="30" onclick="selectChip(this)">30 sec</div>
+        <div class="chip active" data-val="30" onclick="selectChip(this)">30s</div>
         <div class="chip" data-val="60" onclick="selectChip(this)">1 min</div>
         <div class="chip" data-val="120" onclick="selectChip(this)">2 min</div>
         <div class="chip" data-val="180" onclick="selectChip(this)">3 min</div>
       </div>
     </div>
-    <button id="startBtn" disabled onclick="startTimer()">Lancer le chrono</button>
+
+    <button id="startBtn" disabled onclick="startTimer()">Lancer le chrono &rarr;</button>
   </div>
+
+  <!-- TIMER -->
   <div id="timerView">
     <div class="q-display" id="qDisplay"></div>
     <div class="ring-wrap">
-      <svg class="ring" viewBox="0 0 150 150">
-        <circle class="bg" cx="75" cy="75" r="63"/>
-        <circle class="prog" id="progCircle" cx="75" cy="75" r="63"/>
+      <svg class="ring" viewBox="0 0 180 180">
+        <circle class="bg" cx="90" cy="90" r="78"/>
+        <circle class="prog" id="progCircle" cx="90" cy="90" r="78"/>
       </svg>
       <div class="time-lbl" id="timeLbl">30</div>
+      <div class="time-unit">sec</div>
     </div>
     <div class="pressure" id="pressureMsg"></div>
     <div class="opts-row" id="optsBtns"></div>
-    <button id="skipBtn" onclick="resetAll()">passer / reset</button>
+    <button id="skipBtn" onclick="resetAll()">abandonner</button>
   </div>
+
+  <!-- RESULT -->
   <div id="resultView">
-    <div class="badge" id="resBadge">Tu as choisi</div>
-    <div class="chosen-text" id="chosenTxt"></div>
-    <div class="insight-text" id="insightTxt"></div>
+    <div class="result-header">
+      <div class="result-tag" id="resBadge">Decision prise</div>
+      <div class="chosen-card">
+        <div class="chosen-label">Tu as choisi</div>
+        <div class="chosen-text" id="chosenTxt"></div>
+      </div>
+      <div class="insight-text" id="insightTxt"></div>
+    </div>
+
     <div class="conf-section">
-      <div class="conf-label">A quel point tu es sur de ce choix ?</div>
+      <div class="conf-label">Niveau de certitude</div>
+      <div class="conf-display">
+        <span class="conf-num" id="confNum">5</span>
+        <span class="conf-denom">/10</span>
+      </div>
       <div class="conf-row">
-        <span style="font-size:12px;color:var(--text2)">Pas sur</span>
+        <span class="conf-edge">Pas sur</span>
         <input type="range" id="confSlider" min="1" max="10" value="5" step="1" oninput="updateConf()">
-        <span style="font-size:12px;color:var(--text2)">Certain</span>
-        <span class="conf-val" id="confVal">5</span>
+        <span class="conf-edge">Certain</span>
       </div>
       <div class="conf-feedback" id="confFeedback"></div>
     </div>
+
     <div class="action-row">
-      <button class="flip-btn" id="flipBtn" onclick="flipDecision()">Tester l'option inverse</button>
-      <button onclick="saveAndReset()">Nouvelle decision</button>
+      <button class="btn-flip" id="flipBtn" onclick="flipDecision()">Tester l'inverse</button>
+      <button class="btn-new" onclick="saveAndReset()">Nouvelle decision</button>
     </div>
   </div>
+
+  <!-- HISTORY -->
   <div id="histView">
-    <h1>Tes decisions</h1>
-    <p class="sub">Un miroir de tes choix — pour mieux te connaitre.</p>
+    <div class="view-title">Tes <span class="hl">choix.</span></div>
+    <div class="view-sub">// un miroir de tes decisions — pour mieux te connaitre.</div>
     <div id="histList"></div>
-    <div id="histEmpty" style="font-size:13px;color:var(--text2);margin-top:1rem;">Aucune decision enregistree encore.</div>
+    <div class="hist-empty" id="histEmpty">Aucune decision enregistree encore.</div>
   </div>
-  <div class="footer">Decision Timer &mdash; by Tazzi H</div>
+
+  <div class="footer">
+    <div class="footer-brand">Decision Timer — by <span>Tazzi H</span></div>
+  </div>
+
 </div>
+
 <script>
-const CIRC=2*Math.PI*63;
-let selTime=30,selMood=null,tmr=null,rem=0,tot=30,curQ='',curOpts=[],lastChosen=null;
-let hist=JSON.parse(localStorage.getItem('dt_hist')||'[]');
-const PM={serein:{0.9:"Tu geres...",0.6:"Toujours tranquille ?",0.4:"Un peu de pression ne fait pas de mal.",0.2:"Choisis avant que ca parte.",0.05:"Maintenant."},stresse:{0.9:"Respire. Tu as le temps.",0.6:"Vas-y doucement.",0.4:"Fais confiance a ce que tu ressens.",0.2:"L'instinct parle.",0.05:"C'est le moment."},bloque:{0.9:"Pas besoin d'etre sur a 100%.",0.6:"Une direction, meme imparfaite.",0.4:"Le blocage dit quelque chose.",0.2:"Choisis. Tu ajusteras apres.",0.05:"Maintenant ou jamais."}};
-const IM={serein:["Tu savais deja. Le chrono t'a juste confirme.","Quand on est calme, les bonnes decisions viennent vite.","Serein et decide — c'est le combo gagnant."],stresse:["Meme sous pression, tu as choisi. C'est du courage.","Le stress n'empeche pas les bonnes decisions.","Tu etais stresse, et tu as quand meme avance. Respect."],bloque:["Tu etais bloque, mais tu as bouge. C'est tout ce qui compte.","Un choix imparfait vaut mieux qu'une attente sans fin.","Sortir du blocage, c'est deja une victoire."]};
-function showView(v){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));['setupView','timerView','resultView','histView'].forEach(id=>document.getElementById(id).style.display='none');if(v==='setup'){document.querySelector('.nav-btn:nth-child(1)').classList.add('active');document.getElementById('setupView').style.display='block';}else{document.querySelector('.nav-btn:nth-child(2)').classList.add('active');renderHist();document.getElementById('histView').style.display='block';}}
+const CIRC = 2 * Math.PI * 78;
+let selTime=30, selMood=null, tmr=null, rem=0, tot=30;
+let curQ='', curOpts=[], lastChosen=null;
+let hist = JSON.parse(localStorage.getItem('dt_hist_v2') || '[]');
+
+const PM = {
+  serein:{0.9:"steady...",0.6:"toujours tranquille ?",0.4:"un peu de pression.",0.2:"choisis avant que ca parte.",0.05:"maintenant."},
+  stresse:{0.9:"respire. tu as le temps.",0.6:"doucement. ecoute ton ventre.",0.4:"mi-chemin. fais confiance.",0.2:"l'instinct parle. ecoute-le.",0.05:"c'est le moment."},
+  bloque:{0.9:"pas besoin d'etre sur a 100%.",0.6:"une direction, meme imparfaite.",0.4:"qu'est-ce qui te fait peur ?",0.2:"choisis. tu ajusteras apres.",0.05:"maintenant ou jamais."}
+};
+const IM = {
+  serein:["tu savais deja. le chrono t'a juste confirme.","quand on est calme, les bonnes decisions viennent vite.","serein et decide — c'est le combo gagnant."],
+  stresse:["meme sous pression, tu as choisi. c'est du courage.","le stress n'empeche pas les bonnes decisions — il les teste.","tu etais stresse, et tu as quand meme avance."],
+  bloque:["tu etais bloque, mais tu as bouge. c'est tout ce qui compte.","un choix imparfait vaut mieux qu'une attente sans fin.","sortir du blocage, c'est deja une victoire."]
+};
+
+function showView(v) {
+  document.querySelectorAll('.nav-pill').forEach(b=>b.classList.remove('active'));
+  ['setupView','timerView','resultView','histView'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+  if(v==='setup'){
+    document.querySelector('.nav-pill:nth-child(1)').classList.add('active');
+    const s=document.getElementById('setupView'); s.style.display='block'; s.classList.add('view-in');
+  } else {
+    document.querySelector('.nav-pill:nth-child(2)').classList.add('active');
+    renderHist();
+    const h=document.getElementById('histView'); h.style.display='block'; h.classList.add('view-in');
+  }
+}
+
 function selectChip(el){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');selTime=parseInt(el.dataset.val);}
 function selectMood(el){document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');selMood=el.dataset.mood;checkReady();}
 function checkReady(){const q=document.getElementById('question').value.trim(),o=document.getElementById('options').value.trim();document.getElementById('startBtn').disabled=!(q&&o&&selMood);}
-function startTimer(){curQ=document.getElementById('question').value.trim();curOpts=document.getElementById('options').value.trim().split('\n').filter(l=>l.trim());if(!curQ||!curOpts.length||!selMood)return;tot=selTime;rem=tot;lastChosen=null;document.getElementById('setupView').style.display='none';document.getElementById('timerView').style.display='block';document.getElementById('qDisplay').textContent=curQ;const btns=document.getElementById('optsBtns');btns.innerHTML='';curOpts.forEach(opt=>{const b=document.createElement('button');b.className='opt-btn';b.textContent=opt;b.addEventListener('click',()=>choose(opt));btns.appendChild(b);});updateRing();updatePressure();clearInterval(tmr);tmr=setInterval(tick,1000);}
-function tick(){rem--;if(rem<=0){rem=0;clearInterval(tmr);updateRing();setPressure('Temps ecoule.');setTimeout(()=>choose(null),800);return;}updateRing();updatePressure();}
-function updateRing(){const r=rem/tot,off=CIRC*(1-r),c=document.getElementById('progCircle');c.style.strokeDasharray=CIRC;c.style.strokeDashoffset=off;c.style.stroke=r>0.5?'#7F77DD':r>0.25?'#EF9F27':'#E24B4A';document.getElementById('timeLbl').textContent=rem;}
-function updatePressure(){const r=rem/tot,map=PM[selMood]||PM.serein;let msg='';Object.entries(map).sort((a,b)=>b[0]-a[0]).forEach(([t,text])=>{if(r<=parseFloat(t))msg=text;});setPressure(msg);}
-function setPressure(msg){document.getElementById('pressureMsg').textContent=msg;}
-function choose(opt){clearInterval(tmr);lastChosen=opt;document.getElementById('timerView').style.display='none';document.getElementById('resultView').style.display='block';if(opt===null){document.getElementById('resBadge').textContent='Temps ecoule';document.getElementById('chosenTxt').textContent="Tu n'as pas choisi — et c'est une reponse.";document.getElementById('insightTxt').textContent="Le blocage dit quelque chose. Qu'est-ce qui te retient vraiment ?";document.getElementById('flipBtn').style.display='none';}else{document.getElementById('resBadge').textContent='Tu as choisi';document.getElementById('chosenTxt').textContent=opt;const p=IM[selMood]||IM.serein;document.getElementById('insightTxt').textContent=p[Math.floor(Math.random()*p.length)];document.getElementById('flipBtn').style.display='';}document.getElementById('confSlider').value=5;document.getElementById('confVal').textContent='5';document.getElementById('confFeedback').textContent='';}
-function updateConf(){const v=parseInt(document.getElementById('confSlider').value);document.getElementById('confVal').textContent=v;document.getElementById('confFeedback').textContent=v<=3?"Score bas — tu veux tester l'option inverse ?":v<=6?"Confiance moyenne. Un peu d'hesitation, c'est normal.":"Tu es sur. Lance-toi.";}
-function flipDecision(){clearInterval(tmr);const other=curOpts.filter(o=>o!==lastChosen);if(!other.length)return;tot=Math.min(selTime,30);rem=tot;curOpts=other;lastChosen=null;document.getElementById('resultView').style.display='none';document.getElementById('timerView').style.display='block';const btns=document.getElementById('optsBtns');btns.innerHTML='';other.forEach(opt=>{const b=document.createElement('button');b.className='opt-btn';b.textContent=opt;b.addEventListener('click',()=>choose(opt));btns.appendChild(b);});updateRing();updatePressure();tmr=setInterval(tick,1000);}
-function saveAndReset(){const conf=parseInt(document.getElementById('confSlider').value);if(lastChosen&&curQ){hist.unshift({q:curQ,chosen:lastChosen,mood:selMood,conf,date:new Date().toLocaleDateString('fr-FR')});if(hist.length>10)hist.pop();localStorage.setItem('dt_hist',JSON.stringify(hist));}resetAll();}
-function resetAll(){clearInterval(tmr);selMood=null;lastChosen=null;document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));document.getElementById('question').value='';document.getElementById('options').value='';document.getElementById('timerView').style.display='none';document.getElementById('resultView').style.display='none';document.getElementById('setupView').style.display='block';checkReady();}
-function renderHist(){const list=document.getElementById('histList'),empty=document.getElementById('histEmpty');if(!hist.length){list.innerHTML='';empty.style.display='block';return;}empty.style.display='none';const cc=v=>v>=7?'#1D9E75':v>=4?'#EF9F27':'#E24B4A',ml={serein:'Serein',stresse:'Stresse',bloque:'Bloque'};list.innerHTML=hist.map(h=>`<div class="hist-item"><div class="hist-q">${h.q}</div><div class="hist-meta"><span class="conf-dot" style="background:${cc(h.conf)}"></span><strong>${h.chosen}</strong> &mdash; confiance ${h.conf}/10 &middot; ${ml[h.mood]||h.mood} &middot; ${h.date}</div></div>`).join('');}
+
+function startTimer(){
+  curQ=document.getElementById('question').value.trim();
+  curOpts=document.getElementById('options').value.trim().split('\n').filter(l=>l.trim());
+  if(!curQ||!curOpts.length||!selMood)return;
+  tot=selTime;rem=tot;lastChosen=null;
+  document.getElementById('setupView').style.display='none';
+  document.getElementById('resultView').style.display='none';
+  const tv=document.getElementById('timerView'); tv.style.display='block';
+  document.getElementById('qDisplay').textContent=curQ;
+  const btns=document.getElementById('optsBtns'); btns.innerHTML='';
+  curOpts.forEach(opt=>{
+    const b=document.createElement('button'); b.className='opt-btn'; b.textContent=opt;
+    b.addEventListener('click',()=>choose(opt)); btns.appendChild(b);
+  });
+  updateRing(); updatePressure();
+  clearInterval(tmr); tmr=setInterval(tick,1000);
+}
+
+function tick(){rem--;if(rem<=0){rem=0;clearInterval(tmr);updateRing();setPressure('temps ecoule.');setTimeout(()=>choose(null),800);return;}updateRing();updatePressure();}
+
+function updateRing(){
+  const r=rem/tot, off=CIRC*(1-r);
+  const c=document.getElementById('progCircle');
+  c.style.strokeDasharray=CIRC; c.style.strokeDashoffset=off;
+  if(r>0.5) c.style.stroke='#c8f04a';
+  else if(r>0.25) c.style.stroke='#ff8c42';
+  else c.style.stroke='#ff4d4d';
+  document.getElementById('timeLbl').textContent=rem;
+  document.querySelector('.time-unit').textContent=rem>=60?'min':'sec';
+}
+
+function updatePressure(){
+  const r=rem/tot, map=PM[selMood]||PM.serein;
+  let msg='';
+  Object.entries(map).sort((a,b)=>b[0]-a[0]).forEach(([t,text])=>{if(r<=parseFloat(t))msg=text;});
+  setPressure(msg);
+}
+function setPressure(msg){document.getElementById('pressureMsg').textContent='// '+msg;}
+
+function choose(opt){
+  clearInterval(tmr); lastChosen=opt;
+  document.getElementById('timerView').style.display='none';
+  const rv=document.getElementById('resultView'); rv.style.display='block';
+  if(opt===null){
+    document.getElementById('resBadge').textContent='Temps ecoule';
+    document.getElementById('chosenTxt').textContent="tu n'as pas choisi — c'est une reponse aussi.";
+    document.getElementById('insightTxt').textContent="// qu'est-ce qui te retient vraiment ?";
+    document.getElementById('flipBtn').style.display='none';
+  } else {
+    document.getElementById('resBadge').textContent='Decision prise';
+    document.getElementById('chosenTxt').textContent=opt;
+    const p=IM[selMood]||IM.serein;
+    document.getElementById('insightTxt').textContent='// '+p[Math.floor(Math.random()*p.length)];
+    document.getElementById('flipBtn').style.display='';
+  }
+  document.getElementById('confSlider').value=5;
+  document.getElementById('confNum').textContent='5';
+  document.getElementById('confFeedback').textContent='';
+}
+
+function updateConf(){
+  const v=parseInt(document.getElementById('confSlider').value);
+  document.getElementById('confNum').textContent=v;
+  document.getElementById('confFeedback').textContent=
+    v<=3?"// score bas — teste l'option inverse ?":
+    v<=6?"// confiance moyenne. c'est ok.":
+    "// tu es sur. lance-toi.";
+}
+
+function flipDecision(){
+  clearInterval(tmr);
+  const other=curOpts.filter(o=>o!==lastChosen);
+  if(!other.length)return;
+  tot=Math.min(selTime,30);rem=tot;curOpts=other;lastChosen=null;
+  document.getElementById('resultView').style.display='none';
+  document.getElementById('timerView').style.display='block';
+  const btns=document.getElementById('optsBtns');btns.innerHTML='';
+  other.forEach(opt=>{const b=document.createElement('button');b.className='opt-btn';b.textContent=opt;b.addEventListener('click',()=>choose(opt));btns.appendChild(b);});
+  updateRing();updatePressure();tmr=setInterval(tick,1000);
+}
+
+function saveAndReset(){
+  const conf=parseInt(document.getElementById('confSlider').value);
+  if(lastChosen&&curQ){
+    hist.unshift({q:curQ,chosen:lastChosen,mood:selMood,conf,date:new Date().toLocaleDateString('fr-FR')});
+    if(hist.length>10)hist.pop();
+    localStorage.setItem('dt_hist_v2',JSON.stringify(hist));
+  }
+  resetAll();
+}
+
+function resetAll(){
+  clearInterval(tmr);selMood=null;lastChosen=null;
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('question').value='';
+  document.getElementById('options').value='';
+  document.getElementById('timerView').style.display='none';
+  document.getElementById('resultView').style.display='none';
+  document.getElementById('setupView').style.display='block';
+  checkReady();
+}
+
+function renderHist(){
+  const list=document.getElementById('histList'), empty=document.getElementById('histEmpty');
+  if(!hist.length){list.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  const cc=v=>v>=7?'#c8f04a':v>=4?'#ff8c42':'#ff4d4d';
+  const ml={serein:'serein',stresse:'stresse',bloque:'bloque'};
+  list.innerHTML=hist.map(h=>`
+    <div class="hist-item">
+      <div class="hist-q">${h.q}</div>
+      <div class="hist-chosen">&rarr; ${h.chosen}</div>
+      <div class="hist-meta">
+        <div class="hist-conf">
+          <div class="conf-bar"><div class="conf-fill" style="width:${h.conf*10}%;background:${cc(h.conf)}"></div></div>
+          ${h.conf}/10
+        </div>
+        <span class="hist-mood">${ml[h.mood]||h.mood}</span>
+        <span class="hist-date">${h.date}</span>
+      </div>
+    </div>`).join('');
+}
 </script>
 </body>
 </html>
